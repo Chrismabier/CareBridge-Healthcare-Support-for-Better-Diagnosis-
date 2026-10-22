@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CareBridge console</title>
+    <meta name="description" content="Run the CareBridge C++ healthcare console application in your browser." />
+    <meta name="robots" content="noindex" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M13 6h6v7h7v6h-7v7h-6v-7H6v-6h7z' fill='%23fff'/%3E%3C/svg%3E" />
+  </head>
+  <body class="console-page">
+    <header class="console-bar">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">+</span><span>CareBridge</span>
+      </a>
+      <span class="status" id="status" data-state="connecting">connecting&hellip;</span>
+      <div class="console-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-restart" title="Restart the CareBridge process">Restart</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-reset" title="Delete this session's data and re-seed the sample data">Reset data</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-clear" title="Clear the screen (keeps the session)">Clear</button>
+        <a class="btn btn-ghost btn-sm" href="index.html">Home</a>
+      </div>
+    </header>
+
+    <main class="console-main">
+      <div class="terminal" id="terminal">
+        <pre class="terminal-out" id="out" aria-live="polite"></pre>
+        <div class="terminal-input" id="input-row">
+          <span class="prompt" aria-hidden="true">&rsaquo;</span>
+          <input
+            id="cmd"
+            type="text"
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            placeholder="Type a menu choice and press Enter"
+            aria-label="CareBridge input"
+          />
+        </div>
+      </div>
+    </main>
+
+    <footer class="console-foot">
+      <div class="chips" id="chips">
+        <span class="chips-label">Quick actions</span>
+        <button type="button" class="chip" data-seq="1|1|patient123">Login as patient 1</button>
+        <button type="button" class="chip" data-seq="2|1|doctor123">Login as doctor 1</button>
+        <button type="button" class="chip" data-send="1">Send 1</button>
+        <button type="button" class="chip" data-send="2">Send 2</button>
+        <button type="button" class="chip" data-send="0">Back / exit (0)</button>
+      </div>
+      <p class="hint">
+        Demo logins &mdash; patient <code>1</code> / <code>patient123</code>, doctor <code>1</code>-<code>7</code> /
+        <code>doctor123</code>. Each browser tab gets its own private copy of the data; sessions idle
+        for 30 minutes are cleaned up automatically.
+      </p>
+    </footer>
+
+    <script src="console.js"></script>
+  </body>
+</html>

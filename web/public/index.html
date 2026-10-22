@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CareBridge - Healthcare Support for Better Diagnosis</title>
+    <meta
+      name="description"
+      content="CareBridge: a C++17 healthcare management prototype (data structures + OOP) now deployable to the web and usable from the browser."
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M13 6h6v7h7v6h-7v7h-6v-7H6v-6h7z' fill='%23fff'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header class="nav">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">+</span>
+        <span>CareBridge</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#structures">Data structures</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#deploy">Deploy</a>
+        <a class="btn btn-primary btn-sm" href="console.html">Launch console</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="pill">C++17 &middot; Data Structures &middot; OOP</span>
+          <h1>Healthcare support for better diagnosis</h1>
+          <p class="lede">
+            CareBridge is a console-based hospital workflow prototype &mdash; patients find nearby
+            hospitals, browse doctors and book appointments; doctors triage a priority queue and keep
+            health records. It now runs in the browser too: the same C++ binary, streamed to a web
+            terminal.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="console.html">Open the live console</a>
+            <a class="btn btn-ghost" href="#deploy">Deploy your own</a>
+          </div>
+          <dl class="hero-stats">
+            <div><dt>Language</dt><dd>C++17</dd></div>
+            <div><dt>Runtime</dt><dd>Node 18+ / Docker</dd></div>
+            <div><dt>Storage</dt><dd>Flat files</dd></div>
+            <div><dt>Deps</dt><dd>Zero</dd></div>
+          </dl>
+        </div>
+
+        <div class="hero-terminal" aria-hidden="true">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">carebridge</span></div>
+          <pre class="term-body">
+==========================================
+   CareBridge - Healthcare Management
+   Academic prototype (sample data only)
+==========================================
+
+=== Main Menu ===
+ 1. Patient login
+ 2. Doctor login
+ 3. Register as patient
+ 4. Register as doctor
+ 0. Exit
+Choose: 1
+Patient ID: 1
+Password: **********
+
+Welcome, Demo Patient!
+*** Notifications ***
+  - Your appointment #1 with Dr. Anil Sharma
+    on 2026-10-24 10:00 is CONFIRMED.
+<span class="cursor"></span></pre>
+        </div>
+      </section>
+
+      <section id="features" class="section">
+        <h2>What it does</h2>
+        <div class="grid-2">
+          <article class="card">
+            <h3><span class="tag tag-patient">Patient</span></h3>
+            <ul>
+              <li>Register and log in with a patient ID.</li>
+              <li>Find nearby hospitals from predefined areas, sorted by real distance (haversine).</li>
+              <li>Browse doctors by hospital, specialization, fee or name.</li>
+              <li>Book appointment slots with an urgency level (Emergency / Urgent / Routine).</li>
+              <li>View or cancel appointments, read health records and notifications.</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3><span class="tag tag-doctor">Doctor</span></h3>
+            <ul>
+              <li>See pending requests in strict priority order (emergency first, then FIFO).</li>
+              <li>Confirm, reject or defer requests &mdash; patients are notified instantly.</li>
+              <li>Open and close availability slots; review the confirmed schedule.</li>
+              <li>Search patients and add or update health records.</li>
+              <li>Recently viewed patients stack for quick back-and-forth.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="structures" class="section">
+        <h2>Data structures under the hood</h2>
+        <p class="section-lede">
+          Nothing here uses <code>std::list</code> or <code>std::priority_queue</code> &mdash; every
+          structure in <code>src/DataStructures.h</code> is hand-written for the coursework.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Structure / algorithm</th><th>Used for</th><th>Complexity</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Singly linked list</td><td>Patients, doctors, hospitals, appointments, records</td><td>O(n) search, O(1) insert</td></tr>
+              <tr><td>Queue (FIFO)</td><td>Patient notifications</td><td>O(1) enqueue / dequeue</td></tr>
+              <tr><td>Priority queue</td><td>Appointment requests: Emergency &gt; Urgent &gt; Routine, then FIFO</td><td>O(n) insert, O(1) peek</td></tr>
+              <tr><td>Stack (LIFO)</td><td>Doctor's recently viewed patients</td><td>O(1) push / pop</td></tr>
+              <tr><td>Merge sort</td><td>Hospitals by distance, doctors by fee/name, schedules, records</td><td>O(n log n)</td></tr>
+              <tr><td>Binary search</td><td>Find a doctor by ID</td><td>O(log n)</td></tr>
+              <tr><td>Linear search</td><td>Patients by name, doctors by specialization</td><td>O(n)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">
+          OOP: <code>Person</code> is abstract; <code>Patient</code> and <code>Doctor</code> inherit and
+          override <code>display()</code>, <code>serialize()</code> and <code>role()</code>;
+          containers are template classes.
+        </p>
+      </section>
+
+      <section id="architecture" class="section">
+        <h2>How the web deployment works</h2>
+        <p class="section-lede">
+          The web console is a thin transport layer &mdash; it never re-implements the business logic,
+          so the C++ sources stay the single source of truth.
+        </p>
+        <pre class="diagram">
+ browser                      Node server (zero deps)                C++17
+┌────────────────┐  POST /api/session   ┌──────────────────────┐
+│ console.html   │ ────────────────────▶│ session manager      │
+│  terminal UI   │                      │  one process per tab │──┐
+│                │  SSE /api/…/stream   │  own data/ directory │  │  spawn
+│  type a line   │ ◀────────────────────│  idle reaper         │  │
+│        │       │                      └──────────────────────┘  │
+└────────┼───────┘                                                │
+         └── POST /api/…/input ───────────────────────────────▶  ┌▼──────────────┐
+              (line + "\n" on stdin)                            │ ./carebridge  │
+                                                                │ stdin/stdout  │
+                                                                └──────────────┘
+</pre>
+        <ul class="checks">
+          <li><strong>One process per browser tab</strong> with its own sandboxed <code>data/</code> directory, so visitors never share state.</li>
+          <li><strong>Server-Sent Events</strong> for output (no WebSocket handshake, works behind any proxy) and plain <code>POST</code> for keystrokes.</li>
+          <li><strong>Idle sessions are reaped</strong> (30 min by default) and every session dies with the server.</li>
+        </ul>
+      </section>
+
+      <section id="deploy" class="section">
+        <h2>Deploy it</h2>
+        <div class="grid-3">
+          <article class="card">
+            <h3>Local / server</h3>
+            <pre class="code">make
+cd web &amp;&amp; npm start
+# http://localhost:3000</pre>
+          </article>
+          <article class="card">
+            <h3>Docker</h3>
+            <pre class="code">docker compose up --build
+# http://localhost:3000</pre>
+          </article>
+          <article class="card">
+            <h3>Render / Fly.io</h3>
+            <pre class="code">render.yaml   # Blueprint
+fly.toml      # fly launch</pre>
+          </article>
+        </div>
+        <p class="note">
+          Build and test run on every push via GitHub Actions (Linux, macOS, Windows), and
+          <code>main</code> publishes a container image to GHCR plus this page to GitHub Pages.
+          See <code>DEPLOY.md</code> for the full guide and the environment variables.
+        </p>
+      </section>
+
+      <section class="section">
+        <h2>Demo logins</h2>
+        <div class="table-wrap">
+          <table class="table-compact">
+            <thead><tr><th>Role</th><th>ID</th><th>Password</th></tr></thead>
+            <tbody>
+              <tr><td>Patient</td><td><code>1</code></td><td><code>patient123</code></td></tr>
+              <tr><td>Doctor</td><td><code>1</code> &ndash; <code>7</code></td><td><code>doctor123</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">
+          Academic prototype: sample data only, passwords use a simple non-secure hash, and there is no
+          encryption or concurrency control. It is not a replacement for real hospital software.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>CareBridge &middot; Team DSCPP-III-2026-T404 &middot; Mentor: Mr. Kuldeep Nautiyal</p>
+      <p><a href="console.html">Launch console</a> &middot; <a href="#architecture">Architecture</a></p>
+    </footer>
+  </body>
+</html>

@@ -1,10 +1,41 @@
 # CareBridge - Healthcare Support for Better Diagnosis
 
-A console-based **Healthcare Management System** in **C++17** that demonstrates
-**Data Structures** and **Object-Oriented Programming**.
+A **Healthcare Management System** in **C++17** that demonstrates
+**Data Structures** and **Object-Oriented Programming**, now also runnable in the browser.
 Team DSCPP-III-2026-T404 - Mentor: Mr. Kuldeep Nautiyal.
 
+[![CI](https://github.com/Chrismabier/CareBridge-Healthcare-Support-for-Better-Diagnosis-/actions/workflows/ci.yml/badge.svg)](https://github.com/Chrismabier/CareBridge-Healthcare-Support-for-Better-Diagnosis-/actions/workflows/ci.yml)
+[![Deploy to GitHub Pages](https://github.com/Chrismabier/CareBridge-Healthcare-Support-for-Better-Diagnosis-/actions/workflows/pages.yml/badge.svg)](https://github.com/Chrismabier/CareBridge-Healthcare-Support-for-Better-Diagnosis-/actions/workflows/pages.yml)
+
 > Academic prototype. It uses sample data only and is **not** a replacement for real hospital software.
+
+## Two ways to run it
+
+**1. Terminal (original)**
+
+```bash
+make            # build
+./carebridge    # run (use carebridge.exe on Windows)
+make test       # run unit tests
+```
+
+**2. Browser (web console)** - the same C++ binary, streamed to a terminal in the browser:
+
+```bash
+make
+cd web && npm start      # http://localhost:3000  (console at /console.html)
+```
+
+or with Docker:
+
+```bash
+docker compose up --build   # http://localhost:3000
+```
+
+The web runtime (`web/`) has **zero npm dependencies**: it starts one sandboxed `./carebridge`
+process per browser tab, each with its own `data/` directory, pipes keystrokes into its stdin and
+streams its stdout back over Server-Sent Events. No business logic is duplicated in JavaScript.
+See [DEPLOY.md](DEPLOY.md) for Docker, Render, Fly.io, VPS and GitHub Pages deployments.
 
 ## Features
 **Patient:** register/login, find nearby hospitals (predefined areas, sorted by distance), browse doctors
@@ -32,22 +63,11 @@ encapsulation (private/protected members + getters), templates (generic containe
 ## Project structure
 ```
 CareBridge/
-  src/  main.cpp  HealthcareSystem.{h,cpp}  Models.h  DataStructures.h  Utils.h
-  tests/test_structures.cpp
-  data/   (created automatically on first run)
-  Makefile
-```
-
-## Build and run
-Requires a C++17 compiler (g++ 9+, clang, or MSVC).
-```bash
-make            # build
-./carebridge    # run (use carebridge.exe on Windows)
-make test       # run unit tests
-```
-Without `make`:
-```bash
-g++ -std=c++17 -O2 -o carebridge src/main.cpp src/HealthcareSystem.cpp
+  src/       main.cpp  HealthcareSystem.{h,cpp}  Models.h  DataStructures.h  Utils.h
+  tests/     test_structures.cpp
+  web/       server.js  lib/  public/     (zero-dependency Node web runtime)
+  data/      created automatically on first run (local binary)
+  Makefile   Docker/compose, render.yaml, fly.toml   (.github/workflows = CI + Pages)
 ```
 
 ## Demo logins (created on first run)
@@ -62,8 +82,18 @@ g++ -std=c++17 -O2 -o carebridge src/main.cpp src/HealthcareSystem.cpp
 3. Doctor adds a health record for patient 1.
 4. Log in as patient 1 again: notifications and the health record appear.
 
+In the web console the same flow works with the keyboard or the quick-action chips under the
+terminal (Login as patient 1 / Login as doctor 1).
+
 ## Storage
 Plain text files in `data/` (`|` delimited), saved after every change. Delete `data/` to reset to sample data.
+In the web deployment each browser session gets its own copy under `web/runtime/sessions/<id>/`;
+the **Reset data** button wipes it and re-seeds the sample data.
+
+## CI/CD
+Every push builds the project on Linux (g++, clang++), macOS (clang++) and Windows (MSVC), runs
+`make test`, smoke-tests the web console over HTTP, builds the Docker image and - on `main` -
+publishes it to GHCR and deploys the static site to GitHub Pages.
 
 ## Limitations
 Passwords use a simple non-secure hash (prototype only). Nearby hospitals use predefined coordinates, not real GPS.
