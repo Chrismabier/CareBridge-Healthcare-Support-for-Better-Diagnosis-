@@ -1,0 +1,8 @@
+# build output
+carebridge
+carebridge.exe
+test_structures
+test_structures.exe
+*.o
+# runtime data (regenerated with sample data on first run)
+data/
