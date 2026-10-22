@@ -1,0 +1,32 @@
+# Fly.io deployment: https://fly.io
+#   fly launch --config fly.toml   (or: fly deploy)
+#   CareBridge is a single small VM; machines suspend when idle.
+
+app = "carebridge"
+primary_region = "bom"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3000"
+  NODE_ENV = "production"
+  CB_SESSION_TTL_MIN = "30"
+  CB_MAX_SESSIONS = "50"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+[[mounts]]
+  source = "carebridge_sessions"
+  destination = "/app/web/runtime/sessions"

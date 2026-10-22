@@ -1,0 +1,16 @@
+.git
+.github
+.gitignore
+data/
+web/runtime/
+web/node_modules/
+node_modules/
+**/*.o
+carebridge
+carebridge.exe
+test_structures
+test_structures.exe
+dist/
+_site/
+*.md
+!README.md

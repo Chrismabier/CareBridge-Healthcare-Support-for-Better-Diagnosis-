@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build & test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSVC
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build with MSVC (Windows)
+        if: runner.os == 'Windows'
+        run: cl /nologo /std:c++17 /EHsc /O2 /Fe:carebridge.exe src\main.cpp src\HealthcareSystem.cpp
+
+      - name: Build with make (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: make
+
+      - name: Build with clang++ (Linux)
+        if: runner.os == 'Linux'
+        run: clang++ -std=c++17 -Wall -Wextra -O2 -o carebridge-clang src/main.cpp src/HealthcareSystem.cpp
+
+      - name: Unit tests
+        if: runner.os != 'Windows'
+        run: make test
+
+      - name: Upload Linux binary
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: carebridge-linux
+          path: carebridge
+          if-no-files-found: error
+
+  web:
+    name: Web runtime smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build C++ binary
+        run: make
+
+      - name: Syntax check
+        run: npm run check --prefix web
+
+      - name: Start server
+        run: |
+          (cd web && node server.js &)
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:3000/api/health && break
+            sleep 1
+          done
+
+      - name: Drive the console over HTTP
+        run: |
+          set -e
+          BASE=http://127.0.0.1:3000
+          ID=$(curl -sf -X POST $BASE/api/session | python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])')
+          (curl -sN $BASE/api/session/$ID/stream > /tmp/stream.txt &)
+          sleep 1
+          for line in 1 1 patient123; do
+            curl -sf -X POST -H 'Content-Type: application/json' -d "{\"line\":\"$line\"}" $BASE/api/session/$ID/input
+            sleep 1
+          done
+          sleep 1
+          grep -q "Welcome, Demo Patient" /tmp/stream.txt
+          curl -sf -X DELETE $BASE/api/session/$ID
+          echo "console smoke test passed"
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # `github.repository` is not a valid image name here (the repo name
+          # ends with a dash), so a stable owner/carebridge name is used.
+          images: ghcr.io/${{ github.repository_owner }}/carebridge
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build (and push on main)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

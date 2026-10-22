@@ -1,8 +1,12 @@
 # build output
 carebridge
 carebridge.exe
+carebridge-clang
 test_structures
 test_structures.exe
 *.o
 # runtime data (regenerated with sample data on first run)
 data/
+# web runtime: per-session data directories
+web/runtime/
+node_modules/
