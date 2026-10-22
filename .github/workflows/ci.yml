@@ -111,7 +111,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          # `github.repository` is not a valid image name here (the repo name
+          # ends with a dash), so a stable owner/carebridge name is used.
+          images: ghcr.io/${{ github.repository_owner }}/carebridge
           tags: |
             type=ref,event=branch
             type=ref,event=pr

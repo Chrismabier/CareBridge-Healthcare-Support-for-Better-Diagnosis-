@@ -115,10 +115,12 @@ sends permissive CORS headers on `/api/*` (already configured in `web/server.js`
 * **web** — boots the server and drives a real session over HTTP (create session → log in as the
   demo patient → assert on the streamed output).
 * **docker** — builds the image and, on `main`, publishes it to
-  `ghcr.io/<owner>/<repo>:latest` / `:sha-<commit>`.
+  `ghcr.io/<owner>/carebridge:latest` / `:sha-<commit>` (the repository name itself is not a valid
+  Docker image name, so the image is published as `carebridge` under your GHCR namespace).
 
 ```bash
-docker pull ghcr.io/chrismabier/carebridge-healthcare-support-for-better-diagnosis-:latest
+docker pull ghcr.io/chrismabier/carebridge:latest
+docker run --rm -p 3000:3000 ghcr.io/chrismabier/carebridge:latest
 ```
 
 ## 6. Configuration
