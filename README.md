@@ -37,6 +37,12 @@ process per browser tab, each with its own `data/` directory, pipes keystrokes i
 streams its stdout back over Server-Sent Events. No business logic is duplicated in JavaScript.
 See [DEPLOY.md](DEPLOY.md) for Docker, Render, Fly.io, VPS and GitHub Pages deployments.
 
+> **GitHub Pages note:** Pages hosts the landing page + console UI only — it cannot run the
+> server or the C++ binary. If the Pages console shows
+> `Could not reach the CareBridge server (HTTP 405)`, deploy the backend once (e.g. Render
+> Blueprint) and open the console as `console.html?api=https://your-backend-host`, or paste
+> the backend URL into the **Backend** box in the console header. [Details](DEPLOY.md#4-github-pages-static-site--ui-only-needs-a-backend).
+
 ## Features
 **Patient:** register/login, find nearby hospitals (predefined areas, sorted by distance), browse doctors
 (by hospital / specialization / fee / name), book appointment slots with urgency, view or cancel appointments,

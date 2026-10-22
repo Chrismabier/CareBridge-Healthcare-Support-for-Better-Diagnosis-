@@ -92,19 +92,37 @@ sudo systemctl enable --now carebridge
 ```
 Put it behind nginx/Caddy for TLS and to proxy `/` (keep `proxy_buffering off` and SSE working).
 
-## 4. GitHub Pages (static site)
+## 4. GitHub Pages (static site — UI only, needs a backend)
 
 `.github/workflows/pages.yml` deploys `web/public` (landing page + console client) on every
 push to `main`. Enable it once under **Settings → Pages → Source: GitHub Actions**.
 
-Pages cannot run a server, so the console hosted there needs a backend to talk to:
+Pages can only serve static files: it cannot run the Node server or the C++ binary. So the
+console hosted there **always** needs a backend to talk to — opening it without one fails with
+`Could not reach the CareBridge server (HTTP 405)`, because Pages rejects the
+`POST /api/session` call with “Method Not Allowed”. That is expected: it means “no backend”.
 
-```
-https://<user>.github.io/CareBridge-Healthcare-Support-for-Better-Diagnosis-/console.html?api=https://your-backend-host
-```
+Fix it in two steps:
 
-The `?api=` value is remembered in `localStorage`; the backend must be reachable over HTTPS and
-sends permissive CORS headers on `/api/*` (already configured in `web/server.js`).
+1. Deploy the backend once (§2 or §3 — Render Blueprint is the easiest free option).
+   Verify it in a new tab: `https://your-backend-host/api/health` must return `{"ok":true,…}`.
+2. Point the Pages console at it — either paste the URL into the **Backend** box in the
+   console header, or open:
+   ```
+   https://<user>.github.io/CareBridge-Healthcare-Support-for-Better-Diagnosis-/console.html?api=https://your-backend-host
+   ```
+
+The backend URL is remembered in `localStorage` (per browser). It must be reachable over
+**HTTPS** — browsers block `http://` backends from an `https://` page (mixed content).
+CORS on `/api/*` is already configured in `web/server.js`, and a bare host
+(`?api=my-app.onrender.com`) is accepted and assumed to be `https://`.
+
+| Symptom on the Pages console | Meaning |
+|---|---|
+| `HTTP 405` | No backend configured — the request went to Pages itself (§4). |
+| `Failed to fetch` / `reconnecting…` | Backend URL wrong, backend asleep (free hosts need ~1 min to wake), or not HTTPS. |
+| `HTTP 404` on `/api/session` | URL points at something that is not a CareBridge backend — check `/api/health`. |
+| `HTTP 503` | Backend is up but its C++ binary was not built (`make` / `npm run build`). |
 
 ## 5. CI/CD
 

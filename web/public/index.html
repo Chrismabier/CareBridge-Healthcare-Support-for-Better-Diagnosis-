@@ -41,6 +41,23 @@
             <a class="btn btn-primary" href="console.html">Open the live console</a>
             <a class="btn btn-ghost" href="#deploy">Deploy your own</a>
           </div>
+          <p class="note" id="pages-note" hidden>
+            You are viewing the static copy of this site (GitHub Pages), which hosts the UI only.
+            The console needs a running backend &mdash; open it as
+            <code>console.html?api=https://your-backend-host</code> (see <a href="#deploy">Deploy</a>).
+          </p>
+          <script>
+            // Show the note only when this page is NOT served by the CareBridge backend itself.
+            (function () {
+              try {
+                fetch('api/health', { method: 'GET' }).then(function (r) {
+                  if (!r.ok) document.getElementById('pages-note').hidden = false;
+                }).catch(function () {
+                  document.getElementById('pages-note').hidden = false;
+                });
+              } catch (e) { /* static copy without fetch - leave the note hidden */ }
+            })();
+          </script>
           <dl class="hero-stats">
             <div><dt>Language</dt><dd>C++17</dd></div>
             <div><dt>Runtime</dt><dd>Node 18+ / Docker</dd></div>
@@ -179,7 +196,9 @@ fly.toml      # fly launch</pre>
         </div>
         <p class="note">
           Build and test run on every push via GitHub Actions (Linux, macOS, Windows), and
-          <code>main</code> publishes a container image to GHCR plus this page to GitHub Pages.
+          <code>main</code> publishes a container image to GHCR plus the static UI to GitHub Pages.
+          Note: GitHub Pages hosts the UI only &mdash; the console there must be pointed at a backend
+          with <code>console.html?api=https://your-backend-host</code>.
           See <code>DEPLOY.md</code> for the full guide and the environment variables.
         </p>
       </section>

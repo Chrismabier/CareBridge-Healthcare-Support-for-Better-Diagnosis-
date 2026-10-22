@@ -307,6 +307,64 @@ tbody tr:last-child td { border-bottom: none; }
 .chip:hover { background: rgba(20, 184, 166, 0.14); border-color: rgba(20, 184, 166, 0.5); }
 .hint { margin: 0; color: var(--muted); font-size: 0.82rem; }
 
+/* ------------------------------------------------------- backend picker */
+
+.backend-pill {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.backend-pill[data-remote] { color: var(--blue); border-color: rgba(56, 189, 248, 0.4); }
+
+.backend-banner { padding: 12px clamp(12px, 3vw, 22px) 0; }
+.backend-banner[hidden] { display: none; }
+.backend-card {
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.08), rgba(251, 191, 36, 0.03));
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  max-width: 720px;
+}
+.backend-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.backend-head h2 { margin: 0; font-size: 1.05rem; }
+.backend-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.backend-close:hover { color: var(--text); }
+.backend-msg { color: var(--muted); font-size: 0.9rem; margin: 8px 0 12px; }
+.backend-form { display: flex; gap: 8px; flex-wrap: wrap; }
+.backend-form input {
+  flex: 1;
+  min-width: 220px;
+  background: #08131a;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  outline: none;
+}
+.backend-form input:focus { border-color: rgba(20, 184, 166, 0.6); }
+.backend-current { font-size: 0.8rem; color: var(--muted); margin: 10px 0 0; }
+.backend-help { margin-top: 10px; font-size: 0.85rem; color: var(--muted); }
+.backend-help summary { cursor: pointer; color: var(--text); }
+.backend-help ol { margin: 8px 0; padding-left: 20px; }
+.backend-help li { margin: 6px 0; }
+
 /* ANSI colours (only used if the program emits escape codes) */
 .ansi-red { color: #f87171; } .ansi-green { color: #4ade80; } .ansi-yellow { color: #fbbf24; }
 .ansi-blue { color: #60a5fa; } .ansi-magenta { color: #e879f9; } .ansi-cyan { color: #22d3ee; }

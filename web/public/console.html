@@ -15,13 +15,55 @@
         <span class="brand-mark" aria-hidden="true">+</span><span>CareBridge</span>
       </a>
       <span class="status" id="status" data-state="connecting">connecting&hellip;</span>
+      <span class="backend-pill" id="backend-pill" title="Which server this console talks to">same origin</span>
       <div class="console-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-backend" title="Point this console at a different backend server">Backend</button>
         <button type="button" class="btn btn-ghost btn-sm" id="btn-restart" title="Restart the CareBridge process">Restart</button>
         <button type="button" class="btn btn-ghost btn-sm" id="btn-reset" title="Delete this session's data and re-seed the sample data">Reset data</button>
         <button type="button" class="btn btn-ghost btn-sm" id="btn-clear" title="Clear the screen (keeps the session)">Clear</button>
         <a class="btn btn-ghost btn-sm" href="index.html">Home</a>
       </div>
     </header>
+
+    <section class="backend-banner" id="backend-banner" hidden>
+      <div class="backend-card">
+        <div class="backend-head">
+          <h2>Connect to a CareBridge backend</h2>
+          <button type="button" class="backend-close" id="backend-dismiss" aria-label="Dismiss">&times;</button>
+        </div>
+        <p class="backend-msg" id="backend-msg">
+          This copy of the console could not reach a CareBridge server.
+        </p>
+        <form class="backend-form" id="backend-form">
+          <input
+            id="backend-url"
+            type="text"
+            inputmode="url"
+            autocomplete="url"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            placeholder="https://your-carebridge-host"
+            aria-label="Backend server URL"
+          />
+          <button type="submit" class="btn btn-primary btn-sm">Connect</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="backend-local" title="Talk to the same server that served this page">Use same origin</button>
+        </form>
+        <p class="backend-current">Talking to: <code id="backend-current">same origin</code></p>
+        <details class="backend-help">
+          <summary>Where do I get a backend URL?</summary>
+          <ol>
+            <li>Deploy the backend once: <strong>Render Blueprint</strong> (easiest, free), <strong>Fly.io</strong>, Docker, or any VPS &mdash; see <code>DEPLOY.md</code> in the repo.</li>
+            <li>Copy its public URL, e.g. <code>https://carebridge.onrender.com</code> (must be <code>https://</code>, and <code>/api/health</code> on it should return <code>{"ok":true}</code>).</li>
+            <li>Paste it above and press <strong>Connect</strong>. It is remembered in this browser, and you can also share it as <code>console.html?api=https://carebridge.onrender.com</code>.</li>
+          </ol>
+          <p class="note">
+            GitHub Pages only hosts these static files &mdash; it cannot run the Node server or the C++ binary,
+            so the console hosted there always needs a backend URL.
+          </p>
+        </details>
+      </div>
+    </section>
 
     <main class="console-main">
       <div class="terminal" id="terminal">
