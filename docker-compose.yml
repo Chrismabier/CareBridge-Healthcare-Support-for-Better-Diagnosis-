@@ -24,5 +24,26 @@ services:
       retries: 3
       start_period: 10s
 
+  # Bridge AI Personal Assistant (assistant/) -> http://localhost:8000
+  # Offline demo mode by default; uncomment LLM_* for full AI answers.
+  assistant:
+    build:
+      context: .
+      dockerfile: Dockerfile.assistant
+    image: bridge-assistant:latest
+    container_name: bridge-assistant
+    restart: unless-stopped
+    ports:
+      - "${ASSISTANT_PORT:-8000}:8000"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8000
+      # LLM_API_KEY: ""
+      # LLM_BASE_URL: https://api.openai.com/v1
+      # LLM_MODEL: gpt-4o-mini
+    volumes:
+      - bridge-data:/app/assistant/data
+
 volumes:
   carebridge-sessions:
+  bridge-data:

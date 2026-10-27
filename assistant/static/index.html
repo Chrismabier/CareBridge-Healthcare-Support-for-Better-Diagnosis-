@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bridge - AI Personal Assistant · CareBridge</title>
+    <meta name="description" content="AI personal assistant: ask questions, dictate by voice, summarise PDFs with page references, manage notes, tasks and reminders." />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M13 6h6v7h7v6h-7v7h-6v-7H6v-6h7z' fill='%23fff'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <!-- ---------------------------------------------------------- auth -->
+    <section id="auth-screen" class="auth-screen">
+      <div class="auth-card">
+        <div class="brand brand-lg"><span class="brand-mark">+</span><span>Bridge <small>AI Personal Assistant</small></span></div>
+        <p class="auth-lede">Ask questions by voice or text, get answers from <em>your own PDFs</em> with page
+          references, summarise documents, and manage notes, tasks &amp; reminders.</p>
+
+        <div class="auth-tabs" role="tablist">
+          <button id="tab-login" class="auth-tab active" type="button">Log in</button>
+          <button id="tab-register" class="auth-tab" type="button">Register</button>
+        </div>
+
+        <form id="login-form" class="auth-form">
+          <label>Email <input type="email" id="login-email" required autocomplete="email" placeholder="you@example.com" /></label>
+          <label>Password <input type="password" id="login-password" required autocomplete="current-password" placeholder="••••••••" /></label>
+          <button class="btn btn-primary btn-block" type="submit">Log in</button>
+        </form>
+
+        <form id="register-form" class="auth-form hidden">
+          <label>Name <input type="text" id="register-name" required autocomplete="name" placeholder="Your name" /></label>
+          <label>Email <input type="email" id="register-email" required autocomplete="email" placeholder="you@example.com" /></label>
+          <label>Password <input type="password" id="register-password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters" /></label>
+          <button class="btn btn-primary btn-block" type="submit">Create account</button>
+        </form>
+
+        <div class="auth-divider"><span>or</span></div>
+        <button id="demo-btn" class="btn btn-ghost btn-block" type="button">🚀 Try the one-click demo account</button>
+        <p id="auth-error" class="form-error" role="alert"></p>
+        <p class="auth-foot">No account? The demo needs no sign-up. API docs at <a href="/docs" target="_blank" rel="noopener">/docs</a>.</p>
+      </div>
+    </section>
+
+    <!-- ---------------------------------------------------------- app -->
+    <div id="app" class="app hidden">
+      <header class="topbar">
+        <a class="brand" href="#"><span class="brand-mark">+</span><span>Bridge</span></a>
+        <span id="llm-badge" class="badge" title="">…</span>
+        <div class="topbar-actions">
+          <label class="toggle" title="Read every reply aloud automatically">
+            <input type="checkbox" id="autoread-toggle" /> <span>🔊 Auto-read</span>
+          </label>
+          <button id="notify-btn" class="icon-btn" type="button" title="Enable browser notifications for reminders">🔔</button>
+          <button id="panel-toggle" class="icon-btn mobile-only" type="button" title="Documents / notes / tasks">🗂️</button>
+          <span id="user-chip" class="user-chip"></span>
+          <button id="logout-btn" class="btn btn-ghost btn-sm" type="button">Log out</button>
+        </div>
+      </header>
+
+      <aside class="sidebar">
+        <button id="new-chat-btn" class="btn btn-primary btn-block" type="button">＋ New chat</button>
+        <h3>Conversations</h3>
+        <ul id="conversation-list" class="conv-list"></ul>
+        <h3>Try saying</h3>
+        <div class="hint-list">
+          <button class="hint" data-say="remind me to submit the assignment tomorrow at 9am">⏰ remind me to… tomorrow at 9am</button>
+          <button class="hint" data-say="add task: revise linked lists by Friday">✅ add task: … by Friday</button>
+          <button class="hint" data-say="explain recursion">💻 explain recursion</button>
+          <button class="hint" data-say="search my notes for exam">📝 search my notes for exam</button>
+          <button class="hint" data-say="summarise my document">✍️ summarise my document</button>
+        </div>
+        <button id="seed-btn" class="btn btn-ghost btn-block" type="button">✨ Load demo data</button>
+        <p class="sidebar-foot"><a href="/" title="This assistant">Assistant home</a> · <a href="/docs" target="_blank" rel="noopener">API docs</a></p>
+      </aside>
+
+      <main class="chat-pane">
+        <div id="scope-bar" class="scope-bar">
+          <label for="scope-select">🎯 Answer from</label>
+          <select id="scope-select"><option value="">All documents &amp; notes</option></select>
+          <span id="stats-chip" class="muted"></span>
+        </div>
+
+        <div id="messages" class="messages" aria-live="polite"></div>
+
+        <div id="voice-status" class="voice-status hidden"><span class="pulse"></span><span id="voice-status-text">Listening…</span></div>
+
+        <form id="chat-form" class="composer">
+          <button id="mic-btn" class="mic-btn" type="button" title="Voice input (speech to text)">🎤</button>
+          <textarea id="chat-input" rows="1" placeholder="Ask me anything… or tap 🎤 and speak  (Enter to send, Shift+Enter for newline)" maxlength="6000"></textarea>
+          <button id="stop-speak-btn" class="icon-btn hidden" type="button" title="Stop reading aloud">⏹️</button>
+          <button id="send-btn" class="btn btn-primary" type="submit">Send ➤</button>
+        </form>
+        <p id="voice-hint" class="composer-hint muted"></p>
+      </main>
+
+      <aside id="side-panel" class="panel">
+        <nav class="panel-tabs">
+          <button class="panel-tab active" data-tab="documents" type="button">📄 Docs</button>
+          <button class="panel-tab" data-tab="notes" type="button">📝 Notes</button>
+          <button class="panel-tab" data-tab="tasks" type="button">✅ Tasks</button>
+          <button class="panel-tab" data-tab="reminders" type="button">⏰ Alerts</button>
+        </nav>
+
+        <!-- documents -->
+        <section id="tab-documents" class="tab-page">
+          <div id="drop-zone" class="drop-zone">
+            <p>📄 Drop a <strong>PDF / TXT / MD</strong> here<br /><span class="muted">or</span></p>
+            <label class="btn btn-primary btn-sm">Choose file<input id="file-input" type="file" accept=".pdf,.txt,.md,.markdown" hidden /></label>
+            <p class="muted small">Max 15 MB. Text is indexed per page so answers can cite page numbers.</p>
+          </div>
+          <div id="upload-status" class="small"></div>
+          <ul id="document-list" class="item-list"></ul>
+          <div id="doc-detail" class="doc-detail hidden"></div>
+        </section>
+
+        <!-- notes -->
+        <section id="tab-notes" class="tab-page hidden">
+          <form id="note-search-form" class="inline-form">
+            <input id="note-search-input" type="search" placeholder="Search notes (semantic)…" />
+            <button class="btn btn-ghost btn-sm" type="submit">Search</button>
+          </form>
+          <button id="note-new-btn" class="btn btn-primary btn-sm" type="button">＋ New note</button>
+          <form id="note-editor" class="editor hidden">
+            <input id="note-id" type="hidden" />
+            <input id="note-title" type="text" placeholder="Note title" required maxlength="160" />
+            <textarea id="note-body" rows="6" placeholder="Write your note…"></textarea>
+            <input id="note-tags" type="text" placeholder="tags, comma separated" maxlength="200" />
+            <div class="row">
+              <button class="btn btn-primary btn-sm" type="submit">Save note</button>
+              <button id="note-cancel" class="btn btn-ghost btn-sm" type="button">Cancel</button>
+            </div>
+          </form>
+          <ul id="note-list" class="item-list"></ul>
+        </section>
+
+        <!-- tasks -->
+        <section id="tab-tasks" class="tab-page hidden">
+          <form id="task-form" class="editor">
+            <input id="task-title" type="text" placeholder="New task…" required maxlength="200" />
+            <div class="row">
+              <label class="small">Due <input id="task-due" type="datetime-local" /></label>
+              <label class="small">Priority
+                <select id="task-priority"><option value="low">Low</option><option value="normal" selected>Normal</option><option value="high">High 🔺</option></select>
+              </label>
+            </div>
+            <input id="task-list-name" type="text" placeholder="List name (e.g. Study, Home)" maxlength="80" />
+            <button class="btn btn-primary btn-sm" type="submit">Add task</button>
+          </form>
+          <ul id="task-list" class="item-list"></ul>
+        </section>
+
+        <!-- reminders -->
+        <section id="tab-reminders" class="tab-page hidden">
+          <form id="reminder-form" class="editor">
+            <input id="reminder-title" type="text" placeholder="Remind me to…" required maxlength="200" />
+            <label class="small">When <input id="reminder-when" type="datetime-local" required /></label>
+            <button class="btn btn-primary btn-sm" type="submit">Set reminder</button>
+          </form>
+          <p class="muted small">Or just tell the chat: <em>“remind me in 30 minutes to drink water”</em>. Due reminders pop up here (enable 🔔 for browser notifications).</p>
+          <ul id="reminder-list" class="item-list"></ul>
+        </section>
+      </aside>
+    </div>
+
+    <div id="toasts" class="toasts" aria-live="assertive"></div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

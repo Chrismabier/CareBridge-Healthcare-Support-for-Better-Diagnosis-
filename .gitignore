@@ -10,3 +10,10 @@ data/
 # web runtime: per-session data directories
 web/runtime/
 node_modules/
+
+# Bridge AI Assistant (assistant/)
+assistant/.venv/
+assistant/data/
+assistant/__pycache__/
+assistant/**/__pycache__/
+.env

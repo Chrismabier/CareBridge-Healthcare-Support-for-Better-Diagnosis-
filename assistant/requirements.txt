@@ -1,0 +1,9 @@
+# CareBridge AI Personal Assistant - deliberately small dependency list.
+# Everything else (auth, TF-IDF vector store, LLM client, SQLite) is
+# implemented on the Python standard library.
+fastapi>=0.110
+uvicorn>=0.29
+pypdf>=4.0
+python-multipart>=0.0.9
+# test-only (used by tests/test_assistant.py via fastapi.testclient)
+httpx>=0.27

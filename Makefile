@@ -31,7 +31,18 @@ docker-build:
 docker-run: docker-build
 	docker run --rm -p 3000:3000 carebridge:latest
 
-.PHONY: all test run clean web serve docker-build docker-run
+
+# ---- Bridge AI Assistant (assistant/, Python/FastAPI) ---------------------
+assistant-setup:
+	cd assistant && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+
+assistant: ## run the AI assistant on http://localhost:8000
+	cd assistant && .venv/bin/python run.py
+
+assistant-test:
+	cd assistant && .venv/bin/python tests/test_assistant.py
+
+.PHONY: all test run clean web serve docker-build docker-run assistant-setup assistant assistant-test
 
 clean:
 	rm -f carebridge test_structures carebridge.exe test_structures.exe

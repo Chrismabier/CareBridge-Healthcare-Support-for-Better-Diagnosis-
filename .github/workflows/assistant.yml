@@ -1,0 +1,40 @@
+# Bridge AI Assistant (assistant/) - installs deps, syntax-checks the
+# frontend, runs the test suite (offline mode, no secrets needed) and
+# builds the Docker image. Independent of the C++ CI in ci.yml.
+name: Assistant CI
+
+on:
+  push:
+    paths:
+      - "assistant/**"
+      - "Dockerfile.assistant"
+      - "docker-compose.yml"
+      - ".github/workflows/assistant.yml"
+  pull_request:
+    paths:
+      - "assistant/**"
+      - "Dockerfile.assistant"
+      - "docker-compose.yml"
+      - ".github/workflows/assistant.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: assistant/requirements.txt
+      - name: Install dependencies
+        run: pip install -r assistant/requirements.txt
+      - name: Syntax-check Python and JavaScript
+        run: |
+          python -m compileall -q assistant/app assistant/run.py assistant/scripts/make_sample_pdf.py assistant/tests
+          node --check assistant/static/app.js
+      - name: Run assistant tests
+        working-directory: assistant
+        run: python tests/test_assistant.py
+      - name: Build assistant Docker image
+        run: docker build -f Dockerfile.assistant -t bridge-assistant:ci .

@@ -1,0 +1,30 @@
+# ---------------------------------------------------------------------------
+# Bridge AI Personal Assistant (assistant/) - standalone image.
+#
+#   docker build -f Dockerfile.assistant -t bridge-assistant .
+#   docker run --rm -p 8000:8000 bridge-assistant
+#   # full AI mode: -e LLM_API_KEY=sk-...  (see assistant/.env.example)
+# ---------------------------------------------------------------------------
+FROM python:3.12-slim
+ENV PYTHONUNBUFFERED=1 \
+    HOST=0.0.0.0 \
+    PORT=8000
+WORKDIR /app/assistant
+
+COPY assistant/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY assistant/run.py ./run.py
+COPY assistant/app ./app
+COPY assistant/static ./static
+
+RUN useradd --create-home --uid 10001 bridge \
+ && mkdir -p /app/assistant/data \
+ && chown -R bridge:bridge /app
+USER bridge
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4)"
+
+CMD ["python", "run.py"]

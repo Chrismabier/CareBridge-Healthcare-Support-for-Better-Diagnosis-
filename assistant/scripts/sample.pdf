@@ -1,0 +1,83 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Length 528 >>
+stream
+BT /F1 13 Tf 56 760 Td 18 TL
+(CareBridge Project Report - Sample PDF) Tj T*
+() Tj T*
+(Chapter 1: Introduction) Tj T*
+(CareBridge is a healthcare management system written in modern C++.) Tj T*
+(Patients can register, find nearby hospitals, browse doctors and) Tj T*
+(book appointments. Doctors can triage appointment requests and) Tj T*
+(maintain electronic health records for their patients.) Tj T*
+(The system serves two hospitals in the demo data set: CityCare) Tj T*
+(General Hospital and Riverbend Medical Center.) Tj T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Length 566 >>
+stream
+BT /F1 13 Tf 56 760 Td 18 TL
+(Chapter 2: Data Structures Used) Tj T*
+() Tj T*
+(A singly linked list stores patients, doctors and appointments,) Tj T*
+(giving constant-time insertion but linear-time search.) Tj T*
+(A priority queue orders appointment requests so that Emergency) Tj T*
+(cases are seen first, then Urgent, then Routine requests.) Tj T*
+(A queue delivers patient notifications in first-in first-out order,) Tj T*
+(while a stack tracks each doctor's recently viewed patients.) Tj T*
+(Merge sort ranks hospitals by distance in O\(n log n\) time.) Tj T*
+ET
+endstream
+endobj
+4 0 obj
+<< /Length 509 >>
+stream
+BT /F1 13 Tf 56 760 Td 18 TL
+(Chapter 3: Results and Future Work) Tj T*
+() Tj T*
+(The prototype handles one thousand synthetic patients with ease.) Tj T*
+(Booking a slot and confirming it takes under fifty milliseconds.) Tj T*
+(Future work includes a real database such as SQLite or Postgres,) Tj T*
+(proper password hashing with bcrypt, and a mobile application.) Tj T*
+(Telemedicine video calls are planned for the second release,) Tj T*
+(scheduled for March 2027 according to the project roadmap.) Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 3 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+7 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+8 0 obj
+<< /Type /Pages /Kids [5 0 R 6 0 R 7 0 R] /Count 3 >>
+endobj
+9 0 obj
+<< /Type /Catalog /Pages 8 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000079 00000 n 
+0000000658 00000 n 
+0000001275 00000 n 
+0000001835 00000 n 
+0000001961 00000 n 
+0000002087 00000 n 
+0000002213 00000 n 
+0000002282 00000 n 
+trailer
+<< /Size 10 /Root 9 0 R >>
+startxref
+2331
+%%EOF

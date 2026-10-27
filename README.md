@@ -37,6 +37,28 @@ process per browser tab, each with its own `data/` directory, pipes keystrokes i
 streams its stdout back over Server-Sent Events. No business logic is duplicated in JavaScript.
 See [DEPLOY.md](DEPLOY.md) for Docker, Render, Fly.io, VPS and GitHub Pages deployments.
 
+## 🤖 Bridge — AI Personal Assistant (new, `assistant/`)
+
+This repo now also contains **Bridge**, a voice-enabled AI personal assistant
+(Python + FastAPI + a TF-IDF vector database + vanilla HTML/CSS/JS):
+
+* ask questions by text or **voice** (speech-to-text), hear replies **read aloud**
+* upload **PDFs and ask about them — answers cite the relevant pages** (RAG)
+* summarise documents, search personal notes, explain programming concepts
+* reminders & task lists from natural language ("remind me… tomorrow at 9am")
+* register/login (PBKDF2 + signed tokens), structured errors, rate limiting
+* works **fully offline** with no API key; set `LLM_API_KEY` (OpenAI/Groq/
+  OpenRouter/Ollama) for open-ended AI answers grounded in your documents
+
+```bash
+make assistant-setup   # one-time: venv + deps
+make assistant         # http://localhost:8000  (API docs at /docs)
+make assistant-test    # 15 tests, no network/key needed
+```
+
+Full guide, architecture and API reference: **[`assistant/README.md`](assistant/README.md)**.
+The assistant is additive — the C++ CareBridge system below is unchanged.
+
 ## Features
 **Patient:** register/login, find nearby hospitals (predefined areas, sorted by distance), browse doctors
 (by hospital / specialization / fee / name), book appointment slots with urgency, view or cancel appointments,
@@ -66,6 +88,7 @@ CareBridge/
   src/       main.cpp  HealthcareSystem.{h,cpp}  Models.h  DataStructures.h  Utils.h
   tests/     test_structures.cpp
   web/       server.js  lib/  public/     (zero-dependency Node web runtime)
+  assistant/ app/  static/  tests/        (Bridge AI assistant: FastAPI + vector DB)
   data/      created automatically on first run (local binary)
   Makefile   Docker/compose, render.yaml, fly.toml   (.github/workflows = CI + Pages)
 ```

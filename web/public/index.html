@@ -21,6 +21,7 @@
         <a href="#features">Features</a>
         <a href="#structures">Data structures</a>
         <a href="#architecture">Architecture</a>
+        <a href="#assistant">AI Assistant</a>
         <a href="#deploy">Deploy</a>
         <a class="btn btn-primary btn-sm" href="console.html">Launch console</a>
       </nav>
@@ -73,6 +74,21 @@ Welcome, Demo Patient!
     on 2026-10-24 10:00 is CONFIRMED.
 <span class="cursor"></span></pre>
         </div>
+      </section>
+
+      <section id="assistant" class="section">
+        <h2>🤖 New: Bridge, the AI personal assistant</h2>
+        <p class="section-lede">
+          Alongside the C++ system, this repo now ships <strong>Bridge</strong> (<code>assistant/</code>) &mdash;
+          a FastAPI + vector-database assistant you can talk to. Ask questions by voice, hear answers read
+          aloud, upload a PDF and get answers <em>with page references</em>, summarise documents, search your
+          notes, and manage reminders &amp; tasks in natural language. It runs fully offline; add an
+          <code>LLM_API_KEY</code> for open-ended AI answers grounded in your own documents.
+        </p>
+        <pre class="diagram">make assistant-setup   # one-time setup (venv + deps)
+make assistant         # http://localhost:8000  ·  API docs at /docs
+make assistant-test    # test suite (no API key needed)</pre>
+        <p class="note">Full guide: <code>assistant/README.md</code> in the repository.</p>
       </section>
 
       <section id="features" class="section">
