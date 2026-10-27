@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 class AskBody(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
+    client_llm: bool = False
 
 
 def _require_document(user: dict, document_id: int) -> dict:
@@ -93,11 +94,13 @@ def summarize(document_id: int, user: dict = Depends(auth.get_current_user)):
 @router.post("/{document_id}/ask")
 def ask(document_id: int, body: AskBody, user: dict = Depends(auth.get_current_user)):
     doc = _require_document(user, document_id)
-    result = tools.answer_about_document(user, doc, body.question.strip())
+    result = tools.answer_about_document(user, doc, body.question.strip(),
+                                         client_llm=body.client_llm)
     return {
         "document_id": document_id,
         "title": doc["title"],
         "answer": result.reply,
         "citations": result.citations,
         "tools_used": result.tools_used,
+        "pending_llm": result.pending_llm,
     }

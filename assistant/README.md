@@ -7,14 +7,18 @@ documents, an **OpenAI-compatible LLM layer**, and a dependency-free
 
 It is designed to be useful in two modes:
 
-* **Offline demo mode (default, zero API keys)** — PDF Q&A with page
-  citations, extractive summaries, notes search, tasks, reminders and a
-  programming knowledge base all run locally and deterministically.
-* **Full AI mode** — set `LLM_API_KEY` (OpenAI, Groq, OpenRouter, Ollama, …)
-  and open-ended questions, abstractive summaries and tutor-style explanations
-  are answered by the model, *grounded in your documents (RAG)*. If the
-  provider is down, the assistant falls back to the offline brain instead of
-  erroring.
+* **Offline mode (default, zero API keys)** — PDF Q&A with page citations,
+  extractive summaries, notes search, tasks, reminders and a 33-topic
+  computing/programming knowledge base (CPU, recursion, Big-O, Git, the web…)
+  all run locally and deterministically.
+* **Full AI mode (pick either)** —
+  **(a) Browser key (BYOK):** tap **⚙️ AI settings**, paste a free
+  Groq/OpenRouter key, and your *browser* asks the provider directly with
+  the grounded prompt this server prepares (the key never touches the
+  server, so it works in any hosted preview); or
+  **(b) Server key:** set `LLM_API_KEY` (OpenAI, Groq, OpenRouter, Ollama…)
+  so the backend calls the model itself. If the provider is down, the
+  assistant falls back to the offline brain instead of erroring.
 
 > This is a portfolio/learning project that lives alongside the CareBridge
 > C++17 system in this repository (see the [root README](../README.md)). It
@@ -24,7 +28,7 @@ It is designed to be useful in two modes:
 
 | Feature | How it works |
 |---|---|
-| 💬 Answer questions using an AI model | `POST /api/chat` → tool router → LLM (`app/llm.py`, any OpenAI-compatible endpoint) with conversation history |
+| 💬 Answer questions using an AI model | `POST /api/chat` → tool router → LLM (`app/llm.py`, any OpenAI-compatible endpoint) with conversation history — or **browser-direct BYOK**: server returns a grounded `pending_llm` prompt, the browser calls the user's provider, `POST /api/chat/{id}/complete` persists the reply |
 | 🎤 Voice commands | Mic button → Web Speech API `SpeechRecognition`; say *"remind me to call the bank tomorrow at 10am"* and it acts |
 | 🗣️→📝 Speech-to-text | Browser `SpeechRecognition` (free, Chrome/Edge) + optional server Whisper proxy at `POST /api/speech/transcribe` |
 | ✍️ Summarize uploaded documents | `POST /api/documents/{id}/summarize` — LLM abstractive summary, extractive (TF-scored sentences) offline |
@@ -57,7 +61,7 @@ hit **✨ Load demo data**, and try:
 * Interactive API docs: <http://localhost:8000/docs>
 
 Run the tests (auth, PDF page-cited Q&A, summaries, chat tools, isolation,
-error cases — no network or API key needed):
+error cases, auth transports, BYOK round-trip — no network or API key needed):
 
 ```bash
 .venv/bin/python tests/test_assistant.py    # also pytest-compatible
@@ -65,7 +69,15 @@ error cases — no network or API key needed):
 
 ### Enable full AI answers (optional)
 
-Copy `.env.example` values into your environment (any OpenAI-compatible API):
+**Easiest — in the browser (no server access needed):** open the app, tap
+**⚙️ AI settings** (top right), paste a free API key from
+[Groq](https://console.groq.com/keys) or [OpenRouter](https://openrouter.ai/keys),
+tick *Use my API key*, Save, and optionally **🔌 Test connection**. The key is
+stored only in your browser's local storage and sent only to that provider;
+removing it is one click in the same dialog. Document answers stay grounded:
+the server still does retrieval and passes the relevant pages to the model.
+
+**Or on the server:** copy `.env.example` values into your environment (any OpenAI-compatible API):
 
 ```bash
 export LLM_API_KEY=sk-...                                      # OpenAI
@@ -149,7 +161,8 @@ Full interactive docs at `/docs` (OpenAPI). Highlights:
 | Endpoint | Description |
 |---|---|
 | `POST /api/auth/{register,login,demo}` · `GET /api/auth/me` | accounts + token |
-| `POST /api/chat` | message → tools → `{reply, citations[], tools_used[], refresh[]}` |
+| `POST /api/chat` | message → tools → `{reply, citations[], tools_used[], refresh[]}`; with `client_llm: true` returns `{pending_llm, offline_reply, …}` instead |
+| `POST /api/chat/{id}/complete` | persist a browser-generated (BYOK) assistant reply |
 | `GET/POST/DELETE /api/conversations…` | chat history |
 | `POST /api/documents/upload` | PDF/TXT/MD → chunks indexed per page |
 | `POST /api/documents/{id}/{ask,summarize}` | page-cited Q&A · summary |
@@ -179,7 +192,7 @@ assistant/
 │   └── routers/            # auth · chat · documents · notes · tasks · misc
 ├── static/                 # index.html · styles.css · app.js (voice, markdown, panels)
 ├── scripts/make_sample_pdf.py + sample.pdf
-├── tests/test_assistant.py # 15 tests, plain-python runnable
+├── tests/test_assistant.py # 21 tests, plain-python runnable
 └── data/                   # created at runtime (gitignored): DB, uploads, .secret
 ```
 

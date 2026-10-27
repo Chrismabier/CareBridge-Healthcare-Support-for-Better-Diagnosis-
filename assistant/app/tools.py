@@ -37,6 +37,10 @@ class ToolResult:
     citations: list[dict] = field(default_factory=list)
     tools_used: list[str] = field(default_factory=list)
     refresh: list[str] = field(default_factory=list)  # UI panels to reload: tasks/reminders/notes/documents
+    # Browser-direct BYOK flow: when set, ``reply`` is the offline fallback and
+    # the client may call its own LLM provider with these grounded messages,
+    # then persist the result via POST /api/chat/{id}/complete.
+    pending_llm: dict | None = None
 
 
 # --------------------------------------------------------------------- helpers
@@ -78,21 +82,31 @@ def _offline_grounded_answer(question: str, hits: list[Hit]) -> str:
     return "Here's what I found in your documents and notes:\n\n" + " ".join(chosen)
 
 
+def _build_llm_messages(conversation_id: int, question: str, hits: list[Hit]) -> list[dict]:
+    """Grounded chat-completions payload (shared by server-LLM and browser-BYOK)."""
+    history = db.recent_history(conversation_id, limit=8)
+    if history and history[-1]["role"] == "user" and history[-1]["content"] == question:
+        history = history[:-1]  # current question is appended below (with context)
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history
+    if hits:
+        messages.append({
+            "role": "user",
+            "content": f"CONTEXT (from the user's own documents/notes):\n\n{_context_block(hits)}\n\n"
+                       f"QUESTION: {question}",
+        })
+    else:
+        messages.append({"role": "user", "content": question})
+    return messages
+
+
+def _pending_payload(conversation_id: int, question: str, hits: list[Hit]) -> dict:
+    return {"messages": _build_llm_messages(conversation_id, question, hits)}
+
+
 def _llm_answer(user: dict, conversation_id: int, question: str, hits: list[Hit]) -> str | None:
     """Ask the LLM, grounded in retrieved context. Returns None to fall back offline."""
     try:
-        history = db.recent_history(conversation_id, limit=8)
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-        messages += history
-        if hits:
-            messages.append({
-                "role": "user",
-                "content": f"CONTEXT (from the user's own documents/notes):\n\n{_context_block(hits)}\n\n"
-                           f"QUESTION: {question}",
-            })
-        else:
-            messages.append({"role": "user", "content": question})
-        return llm.chat(messages)
+        return llm.chat(_build_llm_messages(conversation_id, question, hits))
     except llm.LLMError:
         return None
 
@@ -263,7 +277,7 @@ def summarize_document(user: dict, doc: dict) -> str:
     return summary
 
 
-def tool_explain(user: dict, message: str) -> ToolResult | None:
+def tool_explain(user: dict, message: str, client_llm: bool = False) -> ToolResult | None:
     # Only intercept * explicit* explain-style requests here. Anything else
     # goes to document retrieval first (the offline fallback in handle_chat
     # still checks the KB afterwards).
@@ -283,7 +297,13 @@ def tool_explain(user: dict, message: str) -> ToolResult | None:
             llm_reply = None
         if llm_reply:
             return ToolResult(llm_reply, tools_used=["explain_concept", "llm"])
-        return ToolResult(concept["body"], tools_used=["explain_concept"])
+        result = ToolResult(concept["body"], tools_used=["explain_concept"])
+        if client_llm:
+            result.pending_llm = {"messages": [
+                {"role": "system", "content": "You are a patient programming tutor. Explain concepts clearly in Markdown with a short example and common pitfalls. Keep it under ~350 words."},
+                {"role": "user", "content": f"Explain: {concept['title']}"},
+            ]}
+        return result
     return None  # no KB hit -> general QA (LLM or graceful offline reply)
 
 
@@ -320,7 +340,7 @@ def tool_help(user: dict, message: str) -> ToolResult | None:
 # ------------------------------------------------------------------- routing
 
 def handle_chat(user: dict, conversation_id: int, message: str,
-                document_id: int | None = None) -> ToolResult:
+                document_id: int | None = None, client_llm: bool = False) -> ToolResult:
     """Route one user message through tools, then retrieval, then the LLM."""
     for tool_fn, args in [
         (tool_datetime, (message,)),
@@ -338,7 +358,7 @@ def handle_chat(user: dict, conversation_id: int, message: str,
         if result is not None:
             return result
 
-    explained = tool_explain(user, message)
+    explained = tool_explain(user, message, client_llm=client_llm)
     if explained is not None:
         return explained
 
@@ -357,32 +377,48 @@ def handle_chat(user: dict, conversation_id: int, message: str,
 
     # ---- offline fallbacks (no API key, or provider error) ----
     if strong_hits and strong_hits[0].score >= 0.05:
-        return ToolResult(
+        result = ToolResult(
             _offline_grounded_answer(message, strong_hits),
             citations=[h.citation() for h in strong_hits],
             tools_used=["search_documents", "offline-extractive"],
         )
-    concept = knowledge.find_concept(message)
-    if concept:
-        return ToolResult(concept["body"], tools_used=["explain_concept"])
-    s = db.stats(user["id"])
-    if s["documents"] == 0 and s["notes"] == 0:
-        hint = ("Try uploading a PDF (Documents panel) or use **Load demo data**, then ask me about it - "
-                "I'll answer with page references.")
     else:
-        hint = ("I searched your documents and notes but didn't find anything about that. "
-                "Try different keywords, or ask me to explain a programming concept.")
-    return ToolResult(
-        "I'm currently running in **offline demo mode** (no LLM API key configured), so I can't answer "
-        "open-ended questions from general knowledge yet.\n\n" + hint + "\n\n"
-        "To unlock full AI answers, set `LLM_API_KEY` in the server environment (OpenAI, Groq, OpenRouter "
-        "or a local Ollama all work - see the assistant README). Document Q&A, summaries, notes, tasks, "
-        "reminders and programming explanations already work offline.",
-        tools_used=["general_qa", "offline-demo"],
-    )
+        concept = knowledge.find_concept(message)
+        if concept:
+            result = ToolResult(concept["body"], tools_used=["explain_concept"])
+        else:
+            result = ToolResult(_offline_no_answer(user, message), tools_used=["general_qa", "offline-demo"])
+    if client_llm:
+        # Browser will ask its own provider with the same grounded prompt;
+        # ``result.reply`` stays as the instant offline fallback.
+        result.pending_llm = _pending_payload(conversation_id, message, strong_hits)
+    return result
 
 
-def answer_about_document(user: dict, doc: dict, question: str) -> ToolResult:
+def _offline_no_answer(user: dict, message: str) -> str:
+    stats = db.stats(user["id"])
+    lines = ["I don't have a confident answer for that one yet - I'm in **offline mode** "
+             "(no AI model connected), so I can only use your files and my built-in knowledge right now.\n"]
+    if stats["documents"] == 0 and stats["notes"] == 0:
+        lines.append("- 📄 You have no documents/notes yet: upload a PDF (Documents panel) or use "
+                     "**Load demo data**, then ask me about it - I'll answer with page references.")
+    else:
+        lines.append("- 🔎 I searched your documents and notes - nothing matched. Try different keywords.")
+    suggestions = knowledge.suggest_topics(message)
+    if suggestions:
+        joined = ", ".join(f"**{t}**" for t in suggestions)
+        lines.append(f"- 💻 Closest topics I can explain offline: {joined} - try *explain {suggestions[0]}*.")
+    lines.append(f"- 💻 Or ask about any of my {len(knowledge.CONCEPTS)} built-in topics: *what is a CPU*, "
+                 "*explain recursion*, *how does the web work*, *compiler vs interpreter*...")
+    lines.append("- ⏰✅📝 I can always set reminders, manage tasks and search your notes.")
+    lines.append("\n💡 **Want answers to absolutely anything?** Tap **⚙️ AI settings** (top right) and paste "
+                 "your own free Groq/OpenRouter API key - it stays in your browser, is sent only to that "
+                 "provider, and unlocks full AI answers on top of everything above.")
+    return "\n".join(lines)
+
+
+def answer_about_document(user: dict, doc: dict, question: str,
+                          client_llm: bool = False) -> ToolResult:
     hits = store.search(user["id"], question, top_k=5, source_types=("document",), document_id=doc["id"])
     if not hits:
         return ToolResult(f"I couldn't find anything about that in “{doc['title']}”. Try different keywords.",
@@ -396,6 +432,13 @@ def answer_about_document(user: dict, doc: dict, question: str) -> ToolResult:
         return ToolResult(reply, citations=[h.citation() for h in hits],
                           tools_used=["search_documents", "llm"])
     except llm.LLMError:
-        return ToolResult(_offline_grounded_answer(question, hits),
-                          citations=[h.citation() for h in hits],
-                          tools_used=["search_documents", "offline-extractive"])
+        result = ToolResult(_offline_grounded_answer(question, hits),
+                            citations=[h.citation() for h in hits],
+                            tools_used=["search_documents", "offline-extractive"])
+        if client_llm:
+            result.pending_llm = {"messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content":
+                    f"CONTEXT from the document:\n\n{_context_block(hits)}\n\nQUESTION: {question}"},
+            ]}
+        return result

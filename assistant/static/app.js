@@ -315,6 +315,109 @@ function setupAuth() {
   $('#logout-btn').addEventListener('click', logout);
 }
 
+/* ------------------------------------------------- AI settings (BYOK) */
+function llmSettings() {
+  try { return JSON.parse(store.get('bridge_llm') || '{}'); } catch { return {}; }
+}
+function clientLlmReady() {
+  const cfg = llmSettings();
+  return Boolean(cfg.enabled && cfg.key && cfg.base && cfg.model);
+}
+function updateLlmBadge() {
+  const badge = $('#llm-badge');
+  if (!badge) return;
+  if (clientLlmReady()) {
+    const cfg = llmSettings();
+    badge.textContent = `🧠 ${cfg.model} · your key`;
+    badge.title = `Your browser asks ${cfg.base} directly; the key never reaches this server.`;
+    badge.classList.remove('offline');
+    return;
+  }
+  const server = state.serverLlm;
+  if (server?.enabled) {
+    badge.textContent = `🧠 ${server.model}`;
+    badge.title = `Connected to ${server.base_url}`;
+    badge.classList.remove('offline');
+  } else if (server) {
+    badge.textContent = '📴 Offline mode · add a key ⚙️';
+    badge.title = (server.hint || '') + ' Or tap ⚙️ AI settings and add your own free API key.';
+    badge.classList.add('offline');
+  }
+}
+async function callClientLlm(messages) {
+  const cfg = llmSettings();
+  let res;
+  try {
+    res = await fetch(`${cfg.base.replace(/\/$/, '')}/chat/completions`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${cfg.key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: cfg.model, messages, temperature: 0.4, max_tokens: 900 }),
+    });
+  } catch {
+    throw new Error('could not reach the provider from the browser (network/CORS) - Groq and OpenRouter allow browser calls');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error?.message || `provider returned HTTP ${res.status}`);
+  const content = data?.choices?.[0]?.message?.content?.trim();
+  if (!content) throw new Error('provider returned an empty answer');
+  return content;
+}
+function setupAiSettings() {
+  const modal = $('#ai-modal');
+  const open = () => {
+    const cfg = llmSettings();
+    $('#llm-enabled').checked = Boolean(cfg.enabled);
+    $('#llm-base').value = cfg.base || 'https://api.groq.com/openai/v1';
+    $('#llm-model').value = cfg.model || 'llama-3.3-70b-versatile';
+    $('#llm-key').value = cfg.key || '';
+    $('#llm-test-result').textContent = '';
+    const presets = [...$('#llm-preset').options].map((o) => o.value);
+    const match = presets.find((v) => v !== 'custom' && v.split('|')[0] === (cfg.base || ''));
+    $('#llm-preset').value = match || (cfg.base ? 'custom' : presets[0]);
+    modal.classList.remove('hidden');
+  };
+  const close = () => modal.classList.add('hidden');
+  const readForm = () => ({
+    enabled: $('#llm-enabled').checked,
+    base: $('#llm-base').value.trim().replace(/\/$/, ''),
+    model: $('#llm-model').value.trim(),
+    key: $('#llm-key').value.trim(),
+  });
+  $('#ai-settings-btn').addEventListener('click', open);
+  $('#llm-close').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+  $('#llm-preset').addEventListener('change', (e) => {
+    if (e.target.value === 'custom') return;
+    const [base, model] = e.target.value.split('|');
+    $('#llm-base').value = base;
+    $('#llm-model').value = model;
+  });
+  $('#llm-save').addEventListener('click', () => {
+    const cfg = readForm();
+    store.set('bridge_llm', JSON.stringify(cfg));
+    updateLlmBadge();
+    toast(cfg.enabled && cfg.key ? 'AI key saved - ask me anything now! 🧠' : 'AI settings saved.');
+    close();
+  });
+  $('#llm-clear').addEventListener('click', () => {
+    store.remove('bridge_llm');
+    updateLlmBadge();
+    toast('API key removed from this browser. Back to offline mode.');
+    close();
+  });
+  $('#llm-test').addEventListener('click', async () => {
+    store.set('bridge_llm', JSON.stringify(readForm()));
+    const out = $('#llm-test-result');
+    if (!clientLlmReady()) { out.textContent = '⚠️ Tick "Use my API key" and fill in base URL, model and key first.'; return; }
+    out.textContent = '⏳ Testing…';
+    try {
+      const reply = await callClientLlm([{ role: 'user', content: 'Reply with exactly: OK' }]);
+      out.textContent = `✅ Connected! Model replied: "${reply.slice(0, 80)}"`;
+      updateLlmBadge();
+    } catch (e) { out.textContent = `❌ ${e.message}`; }
+  });
+}
+
 /* ------------------------------------------------------------------ chat */
 function addMessage({ role, content, citations = [], tools = [], pending = false }) {
   const box = $('#messages');
@@ -423,12 +526,32 @@ async function sendChat(message) {
     const scope = $('#scope-select').value;
     const data = await api('/api/chat', {
       method: 'POST',
-      body: { message, conversation_id: state.conversationId, document_id: scope ? Number(scope) : null },
+      body: {
+        message, conversation_id: state.conversationId,
+        document_id: scope ? Number(scope) : null,
+        client_llm: clientLlmReady(),
+      },
     });
     state.conversationId = data.conversation_id;
+    let reply = data.reply;
+    let toolsUsed = data.tools_used;
+    if (data.pending_llm) {
+      // Browser-direct BYOK: ask the user's own provider with the grounded
+      // prompt the server prepared; fall back to the offline reply on error.
+      try {
+        reply = await callClientLlm(data.pending_llm.messages);
+        toolsUsed = [...toolsUsed, 'browser-ai'];
+      } catch (e) {
+        toast(`AI provider problem (${e.message}). Showing my offline answer instead.`, 'error', 8000);
+        reply = data.offline_reply;
+      }
+      await api(`/api/chat/${data.conversation_id}/complete`, {
+        method: 'POST', body: { content: reply, citations: data.citations, tools: toolsUsed },
+      }).catch(() => {}); // history save is best-effort; the answer still shows
+    }
     pending.remove();
-    addMessage({ role: 'assistant', content: data.reply, citations: data.citations, tools: data.tools_used });
-    if ($('#autoread-toggle').checked) speak(data.reply);
+    addMessage({ role: 'assistant', content: reply, citations: data.citations, tools: toolsUsed });
+    if ($('#autoread-toggle').checked) speak(reply);
     await loadConversations();
     for (const panel of data.refresh || []) refreshPanel(panel);
     refreshStats().catch(() => {});
@@ -828,16 +951,8 @@ function setupPanel() {
 
 async function bootApp() {
   const health = await api('/api/health', { auth: false, silent401: true });
-  const badge = $('#llm-badge');
-  if (health.llm.enabled) {
-    badge.textContent = `🧠 ${health.llm.model}`;
-    badge.title = `Connected to ${health.llm.base_url}`;
-    badge.classList.remove('offline');
-  } else {
-    badge.textContent = '📴 Offline demo mode';
-    badge.title = health.llm.hint || '';
-    badge.classList.add('offline');
-  }
+  state.serverLlm = health.llm;
+  updateLlmBadge();
   const me = await api('/api/auth/me', { silent401: true }).catch(() => null);
   if (me) { state.user = me.user; $('#user-chip').textContent = `${me.user.name} · ${me.user.email}`; }
   showWelcome();
@@ -854,6 +969,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupTasks();
   setupReminders();
   setupPanel();
+  setupAiSettings();
   setupRecognition();
   if ('speechSynthesis' in window) speechSynthesis.getVoices(); // warm up voice list
   if (state.token) {

@@ -47,13 +47,14 @@ This repo now also contains **Bridge**, a voice-enabled AI personal assistant
 * summarise documents, search personal notes, explain programming concepts
 * reminders & task lists from natural language ("remind me… tomorrow at 9am")
 * register/login (PBKDF2 + signed tokens), structured errors, rate limiting
-* works **fully offline** with no API key; set `LLM_API_KEY` (OpenAI/Groq/
-  OpenRouter/Ollama) for open-ended AI answers grounded in your documents
+* works **fully offline** with no API key (33-topic built-in knowledge base);
+  for open-ended AI answers paste your own free key in **⚙️ AI settings**
+  (browser-direct) or set `LLM_API_KEY` server-side
 
 ```bash
 make assistant-setup   # one-time: venv + deps
 make assistant         # http://localhost:8000  (API docs at /docs)
-make assistant-test    # 15 tests, no network/key needed
+make assistant-test    # 21 tests, no network/key needed
 ```
 
 Full guide, architecture and API reference: **[`assistant/README.md`](assistant/README.md)**.

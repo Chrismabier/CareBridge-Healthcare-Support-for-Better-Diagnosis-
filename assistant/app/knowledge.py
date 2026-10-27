@@ -180,7 +180,7 @@ CONCEPTS: dict[str, dict] = {
     },
     "machine learning basics": {
         "title": "Machine learning & LLMs (basics)",
-        "aliases": ["machine learning", "ml", "llm", "neural network", "embedding", "embeddings", "vector database", "rag"],
+        "aliases": ["machine learning", "ml", "llm", "ai", "artificial intelligence", "neural network", "embedding", "embeddings", "vector database", "rag"],
         "body": (
             "**Machine learning** fits a model's parameters to examples instead of hand-written rules. Three flavours: "
             "*supervised* (labelled examples), *unsupervised* (find structure), *reinforcement* (learn from rewards).\n\n"
@@ -232,6 +232,239 @@ CONCEPTS: dict[str, dict] = {
             "database query by the logged-in user id (this app does all of the above except TLS, which your host provides)."
         ),
     },
+
+    "cpu": {
+        "title": "CPU (Central Processing Unit)",
+        "aliases": ["cpu", "processor", "central processing unit", "microprocessor"],
+        "body": (
+            "The **CPU** is the computer's 'brain' - the chip that executes program instructions. "
+            "It repeatedly runs a **fetch -> decode -> execute** cycle billions of times per second: fetch an instruction "
+            "from memory, work out what it means, do it (add, compare, jump, load/store).\n\n"
+            "- **Clock speed** (e.g. 3.5 GHz) = cycles per second; **cores** (4, 8, 16...) = how many instruction streams run "
+            "truly in parallel; **cache** (L1/L2/L3) = tiny, very fast memory on the chip that avoids slow trips to RAM.\n"
+            "- It only understands **machine code** - compilers/interpreters translate your Python/C++ down to it.\n\n"
+            "Analogy: the CPU is a chef who follows one recipe step at a time, incredibly fast. More cores = more "
+            "chefs; a bigger cache = ingredients on the counter instead of in the storeroom (RAM) or warehouse (disk)."
+        ),
+    },
+    "gpu": {
+        "title": "GPU (Graphics Processing Unit)",
+        "aliases": ["gpu", "graphics card", "graphics processing unit", "video card"],
+        "body": (
+            "A **GPU** is a processor with *thousands* of small cores designed to do the same simple maths on huge amounts "
+            "of data at once - originally to colour millions of pixels per frame in games.\n\n"
+            "- CPU: a few powerful cores, great at *sequential* logic and branching ('if this, then that').\n"
+            "- GPU: massively *parallel* arithmetic (matrices/vectors), weaker at branching.\n\n"
+            "That parallelism is exactly what training and running AI models needs (matrix multiplications), which is why "
+            "GPUs power modern machine learning, video encoding and scientific simulation - not just graphics."
+        ),
+    },
+    "ram and storage": {
+        "title": "RAM vs storage (memory)",
+        "aliases": ["ram", "random access memory", "volatile memory", "ssd", "hard disk", "storage vs memory"],
+        "body": (
+            "**RAM** is the computer's short-term working memory: fast, but **volatile** - everything in it vanishes when "
+            "power goes off. Running programs and their data live in RAM so the CPU can reach them quickly.\n\n"
+            "**Storage** (SSD/HDD) is long-term and non-volatile: files, apps and the OS live there permanently, but it is "
+            "much slower than RAM.\n\n"
+            "Desk analogy: storage is the filing cabinet, RAM is your desktop. You work with papers *on the desk*; a bigger "
+            "desk (more RAM) lets you keep more documents open at once without slowing down, but clearing the desk "
+            "(switching off) loses anything you did not file away (save)."
+        ),
+    },
+    "operating system": {
+        "title": "Operating systems",
+        "aliases": ["operating system", "os", "kernel", "windows", "linux", "macos", "android"],
+        "body": (
+            "An **operating system** (Windows, macOS, Linux, Android, iOS) is the software layer between your programs and "
+            "the hardware. Its core, the **kernel**, is in charge of:\n\n"
+            "- **Scheduling** - sharing CPU time between running processes (multitasking).\n"
+            "- **Memory** - giving each program its own protected address space.\n"
+            "- **Files and devices** - disks, keyboards, network cards behind uniform APIs (drivers).\n"
+            "- **Security** - users, permissions, isolation between programs.\n\n"
+            "Programs ask the OS for everything via *system calls* ('open this file', 'send this packet') instead of "
+            "talking to hardware directly - that is why the same Python script runs on very different machines."
+        ),
+    },
+    "compiler vs interpreter": {
+        "title": "Compiler vs interpreter",
+        "aliases": ["compiler", "interpreter", "compiled language", "interpreted language", "bytecode"],
+        "body": (
+            "CPUs only run machine code, so human-written code must be translated:\n\n"
+            "- A **compiler** translates the *whole* program ahead of time into a binary (C++, Rust, Go). Result: fast, "
+            "stand-alone executable; many errors caught before running; slower edit-run cycle. CareBridge's `make` does this.\n"
+            "- An **interpreter** translates *while running*, step by step (Python, JavaScript in the browser). "
+            "Result: instant feedback and portability, generally slower execution.\n\n"
+            "Many languages blur the line: Java/C#/Python compile to **bytecode** that a virtual machine then interprets or "
+            "JIT-compiles at runtime - portable *and* fast."
+        ),
+    },
+    "algorithm": {
+        "title": "Algorithms",
+        "aliases": ["algorithm", "algorithms"],
+        "body": (
+            "An **algorithm** is a precise, step-by-step recipe for solving a problem: given some input, produce the correct "
+            "output, always finishing. 'Sort these names', 'find the shortest route', 'is this number prime?' - each has many "
+            "algorithms that differ wildly in speed (see Big-O).\n\n"
+            "Same dish, different recipes: finding a word in a dictionary by checking page 1, 2, 3... (linear search, O(n)) "
+            "versus repeatedly halving the book (binary search, O(log n)). Programs = algorithms + data structures, so "
+            "choosing well is most of what 'writing efficient code' means. Try asking me about *binary search*, *sorting* "
+            "or *recursion* for concrete examples."
+        ),
+    },
+    "functions": {
+        "title": "Functions",
+        "aliases": ["function", "functions", "method", "methods", "parameter", "argument", "return value"],
+        "body": (
+            "A **function** is a named, reusable block of code: it takes inputs (**parameters/arguments**), does a job, and "
+            "usually **returns** a result.\n\n"
+            "```python\ndef average(numbers):      # parameter: numbers\n    return sum(numbers) / len(numbers)   # return value\n\n"
+            "score = average([80, 90, 100])   # argument: the list\n```\n\n"
+            "Why bother? **Reuse** (write once, call anywhere), **readability** (a good name says what the code does), and "
+            "**testability** (small pieces are easy to check). A *pure* function - output depends only on inputs, no side "
+            "effects - is the easiest kind to reason about. A function attached to a class/object is usually called a "
+            "**method**."
+        ),
+    },
+    "loops and conditionals": {
+        "title": "Loops & conditionals",
+        "aliases": ["loop", "loops", "for loop", "while loop", "if else", "conditional", "conditionals", "iteration"],
+        "body": (
+            "Programs make decisions with **conditionals** and repeat work with **loops** - together they are called *control flow*.\n\n"
+            "```python\nfor student in students:        # loop: once per item\n    if student.marks >= 40:     # conditional\n"
+            "        print('pass')\n    else:\n        print('retry')\n```\n\n"
+            "- `for` - repeat a known number of times / over a collection.\n"
+            "- `while` - repeat *until a condition changes* (careful: if it never changes, you get an infinite loop).\n"
+            "- `if / elif / else` - pick a branch based on true/false tests combined with `and`, `or`, `not`.\n\n"
+            "Nested loops are the classic source of O(n-squared) slowness - one loop inside another multiplies the work."
+        ),
+    },
+    "arrays": {
+        "title": "Arrays (and Python lists)",
+        "aliases": ["array", "arrays", "list vs array"],
+        "body": (
+            "An **array** stores items side-by-side in memory, numbered from index **0**. Because the address of item *i* is "
+            "just `start + i x item_size`, access by index is **O(1)** - instant for any size.\n\n"
+            "- Trade-offs: inserting/deleting in the middle means shifting everything after it - **O(n)**. Fixed-size arrays "
+            "(C/C++) cannot grow; *dynamic arrays* (Python `list`, Java `ArrayList`, C++ `std::vector`) resize automatically "
+            "by occasionally copying into a bigger block (amortised O(1) append).\n"
+            "- Contrast with a **linked list**: O(1) insert at a known node, but O(n) to reach the i-th item.\n\n"
+            "Arrays' cache-friendly layout is why they are the default choice in most programs."
+        ),
+    },
+    "how the web works": {
+        "title": "How the internet & web work",
+        "aliases": ["internet", "how the web works", "website", "browser", "web server", "dns", "ip address", "url", "client server"],
+        "body": (
+            "When you open a website, roughly this happens in under a second:\n\n"
+            "1. **DNS** translates the name (`example.com`) into an **IP address** - the phone book of the internet.\n"
+            "2. Your browser (**client**) opens a connection to that machine (**server**) and sends an **HTTP(S) request**: "
+            "`GET /page`.\n"
+            "3. The server runs code (like this FastAPI app), maybe queries a database, and replies with HTML/CSS/JS or JSON "
+            "plus a status code (200 OK, 404 Not Found...).\n"
+            "4. The browser renders HTML+CSS and runs the JavaScript, which can fetch more data from APIs without reloading.\n\n"
+            "You are using exactly this right now: your browser talking to this assistant's server, exchanging JSON over HTTPS."
+        ),
+    },
+    "frontend vs backend": {
+        "title": "Frontend vs backend (full-stack)",
+        "aliases": ["frontend", "backend", "full stack", "fullstack", "front end", "back end"],
+        "body": (
+            "- **Frontend** = what runs in the user's browser/app: layout, styling, interactions (HTML, CSS, JavaScript, "
+            "frameworks like React). This assistant's chat UI, mic button and panels are frontend.\n"
+            "- **Backend** = what runs on a server: business logic, databases, authentication, APIs (Python/FastAPI here, "
+            "also Node, Java, Go...). The backend is where data is stored and rules are enforced - never trust the frontend "
+            "for security, users can modify it.\n\n"
+            "They talk over HTTP APIs (usually JSON). **Full-stack** means working on both sides. This project is a small "
+            "full-stack example: `static/` (frontend) + `app/` (backend) + SQLite (database)."
+        ),
+    },
+    "programming languages": {
+        "title": "Popular programming languages",
+        "aliases": ["programming language", "programming languages", "python", "javascript", "java language", "c++", "which language"],
+        "body": (
+            "Languages are tools - each trades speed, safety and convenience differently:\n\n"
+            "- **Python** - readable, huge ecosystem; data science, AI, backends (this assistant), scripting. Interpreted, "
+            "so slower per operation but very productive.\n"
+            "- **JavaScript/TypeScript** - the language of the browser; also servers via Node.js. Every website uses it.\n"
+            "- **C++** - compiled, manual memory control, maximum performance; games, systems, and CareBridge's core. "
+            "Powerful but unforgiving.\n"
+            "- **Java / C#** - compiled to bytecode on a VM; large enterprise systems, Android (Java/Kotlin), Unity games (C#).\n"
+            "- **Go / Rust** - modern systems languages: Go for simple, concurrent servers; Rust for C++-level speed *with* "
+            "compile-time memory safety.\n\n"
+            "Beginners usually start with Python or JavaScript because feedback is instant; concepts (variables, loops, "
+            "functions, data structures) transfer between all of them."
+        ),
+    },
+    "debugging": {
+        "title": "Bugs, errors & debugging",
+        "aliases": ["debugging", "debug", "bug", "syntax error", "exception", "stack trace", "error types"],
+        "body": (
+            "Three classic error families:\n\n"
+            "- **Syntax errors** - the code will not even parse (missing colon/bracket). Caught before running.\n"
+            "- **Runtime errors / exceptions** - crashes mid-run: divide by zero, `None` where a value was expected, file "
+            "not found. The **stack trace** shows the chain of calls that led there - read it bottom-up, the last line is "
+            "the actual error.\n"
+            "- **Logic errors** - runs fine, wrong answer. The hardest kind; hunt with small tests and prints.\n\n"
+            "**Debugging method**: reproduce reliably, shrink to the smallest failing case, form a hypothesis, check "
+            "actual values (print/logging or a debugger's breakpoints), fix, then re-run *all* tests so you did not break "
+            "something else (that is what this project's test suite is for)."
+        ),
+    },
+    "cloud computing": {
+        "title": "Cloud computing",
+        "aliases": ["cloud computing", "cloud", "aws", "azure", "saas", "iaas", "paas", "hosting"],
+        "body": (
+            "**Cloud computing** = renting computing (servers, storage, databases) over the internet, paid by usage, "
+            "instead of owning machines. Providers: AWS, Microsoft Azure, Google Cloud.\n\n"
+            "- **IaaS** (Infrastructure as a Service) - rent raw virtual machines; you manage the OS upwards.\n"
+            "- **PaaS** (Platform) - push code, the platform runs it (Render, Fly.io, Heroku-style). This repo ships "
+            "configs for exactly that.\n"
+            "- **SaaS** (Software) - finished apps you just use: Gmail, Google Docs.\n\n"
+            "Why it won: start in minutes, scale up/down with demand, someone else maintains hardware - at the cost of "
+            "ongoing rent and dependence on the provider."
+        ),
+    },
+    "cybersecurity": {
+        "title": "Cybersecurity basics",
+        "aliases": ["cybersecurity", "malware", "phishing", "encryption", "hacker", "ransomware", "online safety"],
+        "body": (
+            "Core ideas that prevent most real-world harm:\n\n"
+            "- **Authentication vs authorisation** - proving who you are vs what you are allowed to do. Unique passwords + "
+            "a password manager + **two-factor authentication (2FA)** stop most account takeovers.\n"
+            "- **Phishing** - fake messages/sites stealing credentials; check sender and URL, be suspicious of urgency.\n"
+            "- **Malware/ransomware** - malicious software that steals or locks data; updates + backups are the antidote.\n"
+            "- **Encryption** - scrambling data so only key-holders can read it; HTTPS does this for web traffic.\n"
+            "- **Least privilege and patching** - give accounts/apps only the access they need, and install updates - most "
+            "breaches exploit known, already-fixed holes."
+        ),
+    },
+    "computer basics": {
+        "title": "What is a computer? Hardware vs software",
+        "aliases": ["computer", "how does a computer work", "hardware", "software", "hardware vs software"],
+        "body": (
+            "A **computer** is a machine that takes input, processes it by following instructions, stores data, and "
+            "produces output - unbelievably fast and literal-minded.\n\n"
+            "- **Hardware** = the physical parts you can touch: CPU (executes instructions), RAM (working memory), SSD "
+            "(storage), motherboard, input/output devices (keyboard, screen, network).\n"
+            "- **Software** = the instructions: the operating system (manages the hardware) and applications on top of it "
+            "- including this assistant.\n\n"
+            "Everything - text, photos, videos, programs - is ultimately stored as numbers in **binary** (bits: 0s and 1s; "
+            "8 bits = 1 byte). Different kinds of software just interpret those numbers differently."
+        ),
+    },
+    "binary": {
+        "title": "Binary, bits & bytes",
+        "aliases": ["binary", "bits and bytes", "bit", "byte", "binary number"],
+        "body": (
+            "Computers store everything as **bits** - single 0/1 values (two states are easy to build with electricity: "
+            "off/on). **8 bits = 1 byte**, enough for a character or a number 0-255.\n\n"
+            "**Binary** is counting in base 2: each position is worth double the previous (1, 2, 4, 8, 16...). So `1010` = "
+            "8 + 2 = **10**. Bigger units: KB ~ 10^3 bytes, MB ~ 10^6, GB ~ 10^9 (your phone's storage), TB ~ 10^12.\n\n"
+            "Text = numbers mapped to characters (Unicode/UTF-8); images = grids of pixel numbers; sound = sampled "
+            "waveform numbers. One representation - binary - underneath them all."
+        ),
+    },
 }
 
 
@@ -248,7 +481,9 @@ def find_concept(query: str) -> dict | None:
     for concept in CONCEPTS.values():
         score = 0
         for alias in concept["aliases"]:
-            if alias in lowered:
+            # Boundary-aware match: 'ml' must not match inside 'html',
+            # nor 'os' inside 'most'.
+            if re.search(r"(?<![a-z0-9])" + re.escape(alias) + r"(?![a-z0-9])", lowered):
                 score = max(score, 10 + len(alias))
         overlap = len(set(tokenize(concept["title"])) & query_terms)
         if overlap >= 2:
@@ -256,6 +491,24 @@ def find_concept(query: str) -> dict | None:
         if score > best_score:
             best, best_score = concept, score
     return best if best_score >= 6 else None
+
+
+def suggest_topics(query: str, limit: int = 4) -> list[str]:
+    """Closest KB titles for an unmatched question (stemmed token overlap
+    with title + aliases + body) - used to make offline fallbacks helpful
+    instead of dead ends."""
+    query_terms = set(tokenize(query))
+    if not query_terms:
+        return []
+    scored = []
+    for concept in CONCEPTS.values():
+        haystack = set(tokenize(concept["title"] + " " + " ".join(concept["aliases"])))
+        overlap = len(query_terms & haystack) * 3
+        overlap += len(query_terms & set(tokenize(concept["body"])))
+        if overlap:
+            scored.append((overlap, concept["title"]))
+    scored.sort(reverse=True)
+    return [title for _, title in scored[:limit]]
 
 
 def concept_titles() -> list[str]:

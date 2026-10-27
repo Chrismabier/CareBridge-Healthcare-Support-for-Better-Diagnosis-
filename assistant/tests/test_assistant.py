@@ -295,6 +295,61 @@ def test_garbage_authorization_does_not_shadow_fallback():
                  headers={"Authorization": "Bearer nope", "X-Bridge-Token": "nope"})
     assert resp.status_code == 401
 
+
+# ------------------------------------------- offline KB + browser BYOK flow
+
+def test_what_is_cpu_answers_offline():
+    """Regression: 'what is CPU' used to dead-end in the offline-mode message."""
+    c, h = client()
+    r = c.post("/api/chat", headers=h, json={"message": "what is CPU"}).json()
+    assert "Central Processing Unit" in r["reply"] or "fetch" in r["reply"]
+    assert "offline demo mode" not in r["reply"].lower()
+    r = c.post("/api/chat", headers=h, json={"message": "how does the internet work"}).json()
+    assert "DNS" in r["reply"]
+    # genuinely unknown topic: helpful fallback pointing at AI settings
+    r = c.post("/api/chat", headers=h, json={"message": "what is quantum chromodynamics"}).json()
+    assert "AI settings" in r["reply"] and "offline" in r["reply"].lower()
+
+
+def test_client_llm_pending_and_complete():
+    c, h = client()
+    resp = c.post("/api/chat", headers=h, json={
+        "message": "write a haiku about autumn rain", "client_llm": True})
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["pending_llm"]["messages"][-1]["content"].startswith("write a haiku")
+    assert data["offline_reply"]  # ready-made fallback
+    conv = data["conversation_id"]
+    # assistant message NOT persisted yet (browser still owes us the answer)
+    msgs = c.get(f"/api/conversations/{conv}/messages", headers=h).json()["messages"]
+    assert [m["role"] for m in msgs] == ["user"]
+    # ...browser "called its provider" and now completes the turn:
+    done = c.post(f"/api/chat/{conv}/complete", headers=h, json={
+        "content": "soft rain on rooftops", "citations": data["citations"],
+        "tools": data["tools_used"] + ["browser-ai"]})
+    assert done.status_code == 200, done.text
+    msgs = c.get(f"/api/conversations/{conv}/messages", headers=h).json()["messages"]
+    assert msgs[-1]["role"] == "assistant" and "rooftops" in msgs[-1]["content"]
+    # another user cannot write into this conversation
+    other = c.post("/api/auth/register", json={
+        "name": "Mallory", "email": "mallory@example.com", "password": "password123"}).json()
+    h2 = {"Authorization": f"Bearer {other['token']}"}
+    assert c.post(f"/api/chat/{conv}/complete", headers=h2,
+                  json={"content": "hijack"}).status_code == 404
+
+
+def test_client_llm_pending_includes_document_context():
+    c, h = client()
+    ensure_doc()
+    data = c.post("/api/chat", headers=h, json={
+        "message": "Which hospitals are mentioned?", "client_llm": True,
+        "document_id": _doc_id}).json()
+    assert data["pending_llm"] is not None
+    joined = " ".join(m["content"] for m in data["pending_llm"]["messages"])
+    assert "CONTEXT" in joined and "CityCare" in joined
+    assert any(cite["page"] == 1 for cite in data["citations"])
+    assert "CityCare" in data["offline_reply"]
+
 ALL_TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
 
 if __name__ == "__main__":

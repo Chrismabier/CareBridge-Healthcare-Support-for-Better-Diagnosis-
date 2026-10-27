@@ -50,6 +50,7 @@
           <label class="toggle" title="Read every reply aloud automatically">
             <input type="checkbox" id="autoread-toggle" /> <span>🔊 Auto-read</span>
           </label>
+          <button id="ai-settings-btn" class="icon-btn" type="button" title="AI settings - connect your own free AI API key">⚙️ AI</button>
           <button id="notify-btn" class="icon-btn" type="button" title="Enable browser notifications for reminders">🔔</button>
           <button id="panel-toggle" class="icon-btn mobile-only" type="button" title="Documents / notes / tasks">🗂️</button>
           <span id="user-chip" class="user-chip"></span>
@@ -160,6 +161,38 @@
           <ul id="reminder-list" class="item-list"></ul>
         </section>
       </aside>
+    </div>
+
+    <!-- ------------------------------------------------ AI settings (BYOK) -->
+    <div id="ai-modal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <h3>⚙️ AI settings <span class="muted small">- answers to anything</span></h3>
+        <p class="small muted">Without a key I answer from your documents, notes and my built-in computing
+          knowledge. Add <strong>your own free API key</strong> and your <em>browser</em> will ask that provider
+          directly for open-ended questions - the key is stored only in this browser and is
+          <strong>never sent to this server</strong>. Get a free key:
+          <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a> ·
+          <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a></p>
+        <label class="toggle"><input type="checkbox" id="llm-enabled" /> <span>Use my API key for chat answers</span></label>
+        <label>Provider
+          <select id="llm-preset">
+            <option value="https://api.groq.com/openai/v1|llama-3.3-70b-versatile">Groq (free tier)</option>
+            <option value="https://openrouter.ai/api/v1|meta-llama/llama-3.3-70b-instruct">OpenRouter</option>
+            <option value="https://api.openai.com/v1|gpt-4o-mini">OpenAI</option>
+            <option value="custom">Custom (OpenAI-compatible)…</option>
+          </select>
+        </label>
+        <label>Base URL <input id="llm-base" type="url" placeholder="https://api.groq.com/openai/v1" /></label>
+        <label>Model <input id="llm-model" type="text" placeholder="llama-3.3-70b-versatile" /></label>
+        <label>API key <input id="llm-key" type="password" autocomplete="off" placeholder="paste your key (stored only in this browser)" /></label>
+        <p id="llm-test-result" class="small" role="status"></p>
+        <div class="row">
+          <button id="llm-save" class="btn btn-primary btn-sm" type="button">Save</button>
+          <button id="llm-test" class="btn btn-ghost btn-sm" type="button">🔌 Test connection</button>
+          <button id="llm-clear" class="btn btn-danger btn-sm" type="button">Remove key</button>
+          <button id="llm-close" class="btn btn-ghost btn-sm" type="button">Close</button>
+        </div>
+      </div>
     </div>
 
     <div id="toasts" class="toasts" aria-live="assertive"></div>
